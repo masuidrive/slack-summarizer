@@ -1,6 +1,7 @@
 name: Summarizer
 
 on:
+  workflow_dispatch: true
   schedule:
     - cron: "0 20 * * *" # UTCで指定。日本時間で毎朝5時に実行
 
