@@ -163,10 +163,8 @@ def load_messages(channel_id):
 
 result_text = []
 for channel in channels:
-    print(f"{channel['id']}: {channel['name']}")
     messages = load_messages(channel["id"])
     if messages != None:
-        print(f"----\n#{channel['name']}\n")
         text = summarize(messages)
         result_text.append(f"----\n<#{channel['id']}>\n{text}")
 
