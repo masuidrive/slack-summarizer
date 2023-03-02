@@ -7,7 +7,7 @@ from slack_sdk import WebClient
 from datetime import datetime, timedelta
 
 import openai
-openai.api_key = os.environ.get('OPEN_AI_TOKEN')
+openai.api_key = str(os.environ.get('OPEN_AI_TOKEN'))
 
 # OpenAIのAPIを使って要約を行う
 
@@ -25,8 +25,8 @@ def summarize(text):
 
 
 # APIトークンとチャンネルIDを設定する
-TOKEN = os.environ.get('SLACK_BOT_TOKEN')
-CHANNEL_ID = os.environ.get('SLACK_POST_CHANNEL_ID')
+TOKEN = str(os.environ.get('SLACK_BOT_TOKEN'))
+CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID'))
 
 # 取得する期間を計算する
 HOURS_BACK = 25
