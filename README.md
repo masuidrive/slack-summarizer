@@ -13,6 +13,10 @@ Slack の Public channel の要約を作って投稿するスクリプトです�
 
 誰かキレイにしたら Pull Request ください。機能追加なども大歓迎です。
 
+簡単な解説などはこちらの記事に書いています。
+
+https://note.com/masuidrive/n/na0ebf8a4c4f0
+
 ## How to set it up
 
 GitHub Actions で毎日午前 5 時に動くようになっています。これ以外の環境で動かす場合は適当に頑張ってください。
