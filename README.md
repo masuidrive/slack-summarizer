@@ -13,9 +13,9 @@ Slack の Public channel の要約を作って投稿するスクリプトです�
 
 誰かキレイにしたら Pull Request ください。機能追加なども大歓迎です。
 
-## How to use it
+## How to set it up
 
-GitHub Actions で毎日午前 5 時に動くようになっています
+GitHub Actions で毎日午前 5 時に動くようになっています。これ以外の環境で動かす場合は適当に頑張ってください。
 
 ### 自分の GitHub アカウントに fork する
 
