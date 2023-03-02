@@ -1,0 +1,23 @@
+name: Summarizer
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # UTCで指定。日本時間で毎朝5時に実行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run summarizer.py
+        run: python summarizer.py
+        env:
+          OPEN_AI_TOKEN: ${{ secrets.OPEN_AI_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_POST_CHANNEL_ID: ${{ secrets.SLACK_POST_CHANNEL_ID }}
