@@ -3,9 +3,15 @@
 by [masuidrive](https://twitter.com/masuidrive) @ [Bloom&Co., Inc.](https://www.bloom-and-co.com/) 2023-
 [APACHE LICENSE, 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
+![](https://raw.githubusercontent.com/masuidrive/slack-summarizer/main/images/slack-summarized.png)
+
+Slack の Public channel の要約を作って投稿するスクリプトです。
+
+チャンネルが増えた組織では読むのが追いつかないことが多いため、要約を作って投稿することで、チャンネルの活動を把握しやすくすることができます。
+
 このコードの大半も ChatGPT を使って書きました。とりあえず動くように書いただけなので、コードは雑然としています。
 
-誰かキレイにしたら Pull Request ください。
+誰かキレイにしたら Pull Request ください。機能追加なども大歓迎です。
 
 ## How to use it
 
@@ -50,6 +56,8 @@ GitHub Actions で毎日午前 5 時に動くようになっています
 - Slack で要約結果を投稿したいチャンネルを開きます。
 - 上部のチャンネル名をクリックし、出てきた Popup の最下部にある Channel ID を Value に貼り付けます。
 - 次に Integrations タブを開いて、画面中段の"Add apps"を押し"Summary"を検索してインストールします。
+
+### 実行
 
 これらの設定をすると、毎日午前 5 時に Slack の Public channel の要約結果が投稿されます。
 
