@@ -5,7 +5,7 @@ on:
     - cron: "0 20 * * *" # UTCで指定。日本時間で毎朝5時に実行
 
 jobs:
-  build:
+  summarize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
