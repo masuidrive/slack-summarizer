@@ -66,3 +66,7 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 これらの設定をすると、毎日午前 5 時に Slack の Public channel の要約結果が投稿されます。
 
 手動で実行してみる場合には"Actions" タブを開き、左の"Summarizer"をクリックして、右の"Run workflow"をおしてください。
+
+## Problems
+
+このスクリプトで既知の課題としては、1 チャンネル当たりの発言が 4000token を超えるとコケます。分割する部分は書いてないので。Pull Request をお待ちしてます → 誰か
