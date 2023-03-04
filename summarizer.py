@@ -169,6 +169,7 @@ def load_messages(channel_id):
 
 result_text = []
 for channel in channels:
+    print("channel: ", channel["id"], channel["name"])
     messages = load_messages(channel["id"])
     print("messages: ", messages)
     if messages != None:
