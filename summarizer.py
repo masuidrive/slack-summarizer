@@ -59,6 +59,7 @@ try:
         types="public_channel",
         exclude_archived=True,
     )
+    print("channels_info: ", channels_info)
     channel_names = list(map(lambda c: c["name"], channels_info['channels']))
     print("channel_names: ", channel_names)
     channels = [channel for channel in channels_info['channels']
