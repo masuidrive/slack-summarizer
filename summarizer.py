@@ -62,7 +62,6 @@ try:
         limit=1000,
         user=USER_ID
     )
-    channel_names = list(map(lambda c: c["name"], channels_info['channels']))
     channels = [channel for channel in channels_info['channels']
                 if not channel["is_archived"] and channel["is_channel"]]
     channels = sorted(channels, key=lambda x: int(re.findall(
