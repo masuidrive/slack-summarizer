@@ -68,6 +68,7 @@ try:
     channels = sorted(channels, key=lambda x: int(re.findall(
         r'\d+', x["name"])[0]) if re.findall(r'\d+', x["name"]) else float('inf'))
 except SlackApiError as e:
+    print("Error : {}".format(e))
     exit(1)
 
 # 指定したチャンネルの履歴を取得する
@@ -164,7 +165,6 @@ def load_messages(channel_id):
 
 
 result_text = []
-channel_names = list(map(lambda c: c["name"], channels))
 for channel in channels:
     messages = load_messages(channel["id"])
     if messages != None:
