@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 20 * * *" # UTCで指定。日本時間で毎朝5時に実行
+  push:
 
 jobs:
   summarize:
@@ -22,3 +23,4 @@ jobs:
           OPEN_AI_TOKEN: ${{ secrets.OPEN_AI_TOKEN }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_POST_CHANNEL_ID: ${{ secrets.SLACK_POST_CHANNEL_ID }}
+          SLACK_USER_ID: ${{ secrets.SLACK_USER_ID }}
