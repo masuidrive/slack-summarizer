@@ -167,6 +167,8 @@ def load_messages(channel_id):
 
 
 result_text = []
+channel_names = list(map(lambda c: c["name"], channels))
+print("channel_names: ", channel_names)
 for channel in channels:
     print("channel: ", channel["id"], channel["name"])
     messages = load_messages(channel["id"])
