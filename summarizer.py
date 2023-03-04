@@ -116,7 +116,9 @@ def load_messages(channel_id):
             cursor=result["response_metadata"]["next_cursor"]
         )
         messages.extend(result["messages"])
+        print("message extended: ", len(messages))
     for message in messages[::-1]:
+        print("message: ", message)
         if "bot_id" in message:
             continue
         if message["text"].strip() == '':
