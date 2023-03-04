@@ -32,7 +32,7 @@ TOKEN = str(os.environ.get('SLACK_BOT_TOKEN')).strip()
 CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID')).strip()
 
 # 取得する期間を計算する
-HOURS_BACK = 25 * 2
+HOURS_BACK = 25
 JST = pytz.timezone('Asia/Tokyo')
 now = datetime.now(JST)
 yesterday = now - timedelta(hours=HOURS_BACK)
@@ -55,7 +55,6 @@ except SlackApiError as e:
 
 # チャンネルIDからチャンネル名に変換するために、チャンネル情報を取得する
 USER_ID = str(os.environ.get('SLACK_USER_ID')).strip()
-print("user_id: ", USER_ID)
 try:
     channels_info = client.users_conversations(
         types="public_channel",
@@ -63,16 +62,12 @@ try:
         limit=1000,
         user=USER_ID
     )
-    print("channels_info: ", channels_info)
     channel_names = list(map(lambda c: c["name"], channels_info['channels']))
-    print("channel_names: ", channel_names)
     channels = [channel for channel in channels_info['channels']
                 if not channel["is_archived"] and channel["is_channel"]]
     channels = sorted(channels, key=lambda x: int(re.findall(
         r'\d+', x["name"])[0]) if re.findall(r'\d+', x["name"]) else float('inf'))
-    print("sorted channels: ", channels)
 except SlackApiError as e:
-    print("Error : {}".format(e))
     exit(1)
 
 # 指定したチャンネルの履歴を取得する
@@ -87,7 +82,6 @@ def load_messages(channel_id):
             latest=end_time.timestamp()
         )
     except SlackApiError as e:
-        print("slack error", e)
         if e.response['error'] == 'not_in_channel':
             response = client.conversations_join(
                 channel=channel_id
@@ -102,7 +96,6 @@ def load_messages(channel_id):
                 latest=end_time.timestamp()
             )
         else:
-            print("Error : {}".format(e))
             return None
 
     # messages = result["messages"]
@@ -122,7 +115,6 @@ def load_messages(channel_id):
         )
         messages.extend(result["messages"])
     for message in messages[::-1]:
-        print("\nmessage_text: ", message["text"])
         if "bot_id" in message:
             continue
         if message["text"].strip() == '':
@@ -139,7 +131,6 @@ def load_messages(channel_id):
 
         # テキスト取り出し
         text = message["text"].replace("\n", "\\n")
-        print("text1: ", text)
 
         # メッセージ中に含まれるユーザーIDやチャンネルIDを名前やチャンネル名に展開する
         matches = re.findall(r"<@[A-Z0-9]+>", text)
@@ -153,7 +144,6 @@ def load_messages(channel_id):
             if user_name is None:
                 user_name = user_id
             text = text.replace(match, f"@{user_name} ")
-        print("text2: ", text)
 
         matches = re.findall(r"<#[A-Z0-9]+>", text)
         for match in matches:
@@ -166,7 +156,6 @@ def load_messages(channel_id):
             if channel_name is None:
                 channel_name = channel_id
             text = text.replace(match, f"#{channel_name} ")
-        print("text3: ", text)
         messages_text.append(f"{sender_name}: {text}")
     if len(messages_text) == 0:
         return None
@@ -176,11 +165,8 @@ def load_messages(channel_id):
 
 result_text = []
 channel_names = list(map(lambda c: c["name"], channels))
-print("channel_names: ", channel_names)
 for channel in channels:
-    print("channel: ", channel["id"], channel["name"])
     messages = load_messages(channel["id"])
-    print("messages: ", messages)
     if messages != None:
         text = summarize(messages)
         result_text.append(f"----\n<#{channel['id']}>\n{text}")
@@ -191,4 +177,3 @@ response = client.chat_postMessage(
     channel=CHANNEL_ID,
     text=title+"\n\n"+"\n\n".join(result_text)
 )
-print("Message posted: ", response["ts"])
