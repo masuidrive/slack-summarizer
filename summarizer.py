@@ -81,6 +81,7 @@ def load_messages(channel_id):
             latest=end_time.timestamp()
         )
     except SlackApiError as e:
+        print("slack error", e)
         if e.response['error'] == 'not_in_channel':
             response = client.conversations_join(
                 channel=channel_id
@@ -166,6 +167,7 @@ def load_messages(channel_id):
 result_text = []
 for channel in channels:
     messages = load_messages(channel["id"])
+    print("messages: ", messages)
     if messages != None:
         text = summarize(messages)
         result_text.append(f"----\n<#{channel['id']}>\n{text}")
