@@ -55,10 +55,11 @@ except SlackApiError as e:
 
 # チャンネルIDからチャンネル名に変換するために、チャンネル情報を取得する
 try:
-    channels_info = client.conversations_list(
+    channels_info = client.users_conversations(
         types="public_channel",
         exclude_archived=True,
-        limit=1000
+        limit=1000,
+        user=str(os.environ.get('SLACK_USER_ID')).strip()
     )
     print("channels_info: ", channels_info)
     channel_names = list(map(lambda c: c["name"], channels_info['channels']))
