@@ -96,6 +96,7 @@ def load_messages(channel_id):
                 latest=end_time.timestamp()
             )
         else:
+            print("Error : {}".format(e))
             return None
 
     # messages = result["messages"]
