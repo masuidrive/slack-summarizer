@@ -63,7 +63,6 @@ try:
                 if not channel["is_archived"] and channel["is_channel"]]
     channels = sorted(channels, key=lambda x: int(re.findall(
         r'\d+', x["name"])[0]) if re.findall(r'\d+', x["name"]) else float('inf'))
-    print("channels: ", channels)
 except SlackApiError as e:
     print("Error : {}".format(e))
     exit(1)
@@ -72,7 +71,6 @@ except SlackApiError as e:
 
 
 def load_messages(channel_id):
-    print("channel_id: ", channel_id)
     result = None
     try:
         result = client.conversations_history(
@@ -80,7 +78,6 @@ def load_messages(channel_id):
             oldest=start_time.timestamp(),
             latest=end_time.timestamp()
         )
-        print("result: ", result)
     except SlackApiError as e:
         print("slack error", e)
         if e.response['error'] == 'not_in_channel':
@@ -116,9 +113,7 @@ def load_messages(channel_id):
             cursor=result["response_metadata"]["next_cursor"]
         )
         messages.extend(result["messages"])
-        print("message extended: ", len(messages))
     for message in messages[::-1]:
-        print("message: ", message)
         if "bot_id" in message:
             continue
         if message["text"].strip() == '':
@@ -135,6 +130,7 @@ def load_messages(channel_id):
 
         # テキスト取り出し
         text = message["text"].replace("\n", "\\n")
+        print("text1: ", text)
 
         # メッセージ中に含まれるユーザーIDやチャンネルIDを名前やチャンネル名に展開する
         matches = re.findall(r"<@[A-Z0-9]+>", text)
@@ -148,6 +144,7 @@ def load_messages(channel_id):
             if user_name is None:
                 user_name = user_id
             text = text.replace(match, f"@{user_name} ")
+        print("text2: ", text)
 
         matches = re.findall(r"<#[A-Z0-9]+>", text)
         for match in matches:
@@ -160,6 +157,7 @@ def load_messages(channel_id):
             if channel_name is None:
                 channel_name = channel_id
             text = text.replace(match, f"#{channel_name} ")
+        print("text3: ", text)
         messages_text.append(f"{sender_name}: {text}")
     if len(messages_text) == 0:
         return None
