@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 20 * * *" # UTCで指定。日本時間で毎朝5時に実行
-  push:
 
 jobs:
   summarize:
