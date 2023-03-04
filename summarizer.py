@@ -59,6 +59,7 @@ try:
         types="public_channel",
         exclude_archived=True,
     )
+    print("channels_info: ", channels_info)
     channels = [channel for channel in channels_info['channels']
                 if not channel["is_archived"] and channel["is_channel"]]
     channels = sorted(channels, key=lambda x: int(re.findall(
