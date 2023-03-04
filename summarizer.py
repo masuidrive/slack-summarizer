@@ -80,6 +80,7 @@ def load_messages(channel_id):
             oldest=start_time.timestamp(),
             latest=end_time.timestamp()
         )
+        print("result: ", result)
     except SlackApiError as e:
         print("slack error", e)
         if e.response['error'] == 'not_in_channel':
