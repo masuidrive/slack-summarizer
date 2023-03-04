@@ -58,6 +58,7 @@ try:
     channels_info = client.conversations_list(
         types="public_channel",
         exclude_archived=True,
+        limit=1000
     )
     print("channels_info: ", channels_info)
     channel_names = list(map(lambda c: c["name"], channels_info['channels']))
