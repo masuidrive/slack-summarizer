@@ -96,8 +96,9 @@ def load_messages(channel_id):
         else:
             print("Error : {}".format(e))
             return None
+    # conversations_history api limit is 20 per minute
+    time.sleep(3)
 
-    # messages = result["messages"]
     messages = list(filter(lambda m: "subtype" not in m, result["messages"]))
 
     if len(messages) < 1:
@@ -106,6 +107,7 @@ def load_messages(channel_id):
     messages_text = []
 
     while result["has_more"]:
+        time.sleep(3)  # this api limit is 20 per minute
         result = client.conversations_history(
             channel=channel_id,
             oldest=start_time.timestamp(),
