@@ -3,178 +3,420 @@
 # by [masuidrive](https://twitter.com/masuidrive) @ [Bloom&Co., Inc.](https://www.bloom-and-co.com/) 2023- [APACHE LICENSE, 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 import os
 import re
+import sys
 import time
+from datetime import datetime, timedelta
 import pytz
+import openai
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient
-from datetime import datetime, timedelta
-
-import openai
-openai.api_key = str(os.environ.get('OPEN_AI_TOKEN')).strip()
-
-# OpenAIのAPIを使って要約を行う
 
 
-def summarize(text):
+def summarize(text: str, language: str = "Japanese"):
+    """
+    Summarize a chat log in bullet points, in the specified language.
+
+    Args:
+        text (str): The chat log to summarize, in the format "Speaker: Message" separated by line breaks.
+        language (str, optional): The language to use for the summary. Defaults to "Japanese".
+
+    Returns:
+        str: The summarized chat log in bullet point format.
+
+    Examples:
+        >>> summarize("Alice: Hi\nBob: Hello\nAlice: How are you?\nBob: I'm doing well, thanks.")
+        '- Alice greeted Bob.\n- Bob responded with a greeting.\n- Alice asked how Bob was doing.\n- Bob replied that he was doing well.'
+    """
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        temperature=0.5,
-        messages=[
-            {"role": "system", "content": "チャットログのフォーマットは発言者: 本文\\nになっている。\\nは改行を表しています。これを踏まえて指示に従います"},
-            {"role": "user", "content": f"下記のチャットログを箇条書きで要約してください。。1行ずつの説明ではありません。全体として短く。\n\n{text}"}
-        ]
-    )
+        model=CHAT_MODEL,
+        temperature=TEMPERATURE,
+        messages=[{
+            "role":
+            "system",
+            "content":
+            "\n".join([
+                'The chat log format consists of one line per message in the format "Speaker: Message".',
+                "The `\\n` within the message represents a line break."
+                f'The user understands {language} only.',
+                f'So, The assistant need to speak {language}.',
+            ])
+        }, {
+            "role":
+            "user",
+            "content":
+            "\n".join([
+                f"Please summarize the following chat log with short bullet points in {language}.",
+                "Not a line by line description.", "Short as a whole.", "\n",
+                text
+            ])
+        }])
+
+    print(response["choices"][0]["message"]['content'])
     return response["choices"][0]["message"]['content']
 
 
-# APIトークンとチャンネルIDを設定する
-TOKEN = str(os.environ.get('SLACK_BOT_TOKEN')).strip()
-CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID')).strip()
+def get_time_range():
+    """
+    Get a time range starting from 25 hours ago and ending at the current time.
 
-# 取得する期間を計算する
-HOURS_BACK = 25
-JST = pytz.timezone('Asia/Tokyo')
-now = datetime.now(JST)
-yesterday = now - timedelta(hours=HOURS_BACK)
-start_time = datetime(yesterday.year, yesterday.month, yesterday.day,
-                      yesterday.hour, yesterday.minute, yesterday.second)
-end_time = datetime(now.year, now.month, now.day,
-                    now.hour, now.minute, now.second)
+    Returns:
+        tuple: A tuple containing the start and end times of the time range, as datetime objects.
 
-# Slack APIクライアントを初期化する
-client = WebClient(token=TOKEN)
-
-# ユーザーIDからユーザー名に変換するために、ユーザー情報を取得する
-try:
-    users_info = client.users_list()
-    users = users_info['members']
-except SlackApiError as e:
-    print("Error : {}".format(e))
-    exit(1)
+    Examples:
+        >>> start_time, end_time = get_time_range()
+        >>> print(start_time, end_time)
+        2022-05-17 09:00:00+09:00 2022-05-18 10:00:00+09:00
+    """
+    hours_back = 25 * 3
+    timezone = pytz.timezone(TIMEZONE_STR)
+    now = datetime.now(timezone)
+    yesterday = now - timedelta(hours=hours_back)
+    start_time = datetime(yesterday.year, yesterday.month, yesterday.day,
+                          yesterday.hour, yesterday.minute, yesterday.second)
+    end_time = datetime(now.year, now.month, now.day, now.hour, now.minute,
+                        now.second)
+    return start_time, end_time
 
 
-# チャンネルIDからチャンネル名に変換するために、チャンネル情報を取得する
-try:
-    channels_info = client.conversations_list(
-        types="public_channel",
-        exclude_archived=True,
-        limit=1000
-    )
-    channels = [channel for channel in channels_info['channels']
-                if not channel["is_archived"] and channel["is_channel"]]
-    channels = sorted(channels, key=lambda x: int(re.findall(
-        r'\d+', x["name"])[0]) if re.findall(r'\d+', x["name"]) else float('inf'))
-except SlackApiError as e:
-    print("Error : {}".format(e))
-    exit(1)
+def get_users_info() -> list:
+    """
+    Retrieve information about all users in the Slack workspace.
 
-# 指定したチャンネルの履歴を取得する
+    Returns:
+        list: A list of dictionaries containing information about each user,
+            including their ID, name, and other metadata.
 
+    Raises:
+        SlackApiError: If an error occurs while attempting to retrieve the user information.
 
-def load_messages(channel_id):
-    result = None
+    Examples:
+        >>> users = get_users_info()
+        >>> print(users[0])
+        {
+            'id': 'U12345678',
+            'name': 'alice',
+            'real_name': 'Alice Smith',
+            'email': 'alice@example.com',
+            ...
+        }
+    """
     try:
-        result = client.conversations_history(
+        users = []
+        next_cursor = None
+        while True:
+            users_info = slack_client.users_list(cursor=next_cursor, limit=100)
+            time.sleep(3)
+            users.extend(users_info['members'])
+            if users_info["response_metadata"]["next_cursor"]:
+                next_cursor = users_info["response_metadata"]["next_cursor"]
+            else:
+                break
+        return users
+    except SlackApiError as error:
+        print(f"Error : {error}")
+        sys.exit(1)
+
+
+def get_channels_info() -> list:
+    """
+    Retrieve information about all public channels in the Slack workspace.
+
+    Returns:
+        list: A list of dictionaries containing information about each public channel, including its ID, name, and other metadata.
+
+    Raises:
+        SlackApiError: If an error occurs while attempting to retrieve the channel information.
+
+    Examples:
+        >>> channels = get_channels_info()
+        >>> print(channels[0])
+        {
+            'id': 'C12345678',
+            'name': 'general',
+            'is_channel': True,
+            'is_archived': False,
+            ...
+        }
+    """
+    try:
+        result = slack_client.conversations_list(types="public_channel",
+                                                 exclude_archived=True,
+                                                 limit=1000)
+        channels_info = [
+            channel for channel in result['channels']
+            if not channel["is_archived"] and channel["is_channel"]
+        ]
+
+        def sort_by_channel_name(lst):
+            # 先頭に数字があるか判定
+            def is_digit_first(s):
+                return s and s[0].isdigit()
+
+            # 先頭が数字であれば数値として返し、数字でなければ s を Unicode コードポイントとして返す
+            def key(obj):
+                s = obj["name"]
+                if is_digit_first(s):
+                    # 数字が続く限り文字列を取り出して数値に変換
+                    i = 0
+                    while i < len(s) and s[i].isdigit():
+                        i += 1
+                    return (int(s[:i]), s)
+                else:
+                    return (float('inf'), s)
+
+            return sorted(lst, key=key)
+
+        return sort_by_channel_name(channels_info)
+    except SlackApiError as error:
+        print(f"Error : {error}")
+        sys.exit(1)
+
+
+def remove_custom_emoji(text: str) -> str:
+    """
+    Remove custom emojis from the given text.
+
+    Args:
+        text (str): A string containing the text to remove custom emojis from.
+
+    Returns:
+        str: The input text with custom emojis removed.
+
+    Example:
+        >>> text = "Hello, world! :smile: :wave:"
+        >>> remove_custom_emoji(text)
+        'Hello, world!  '
+    """
+    pattern = r":\w+?:"
+    return re.sub(pattern, "", text)
+
+
+def load_messages(channel_id: str, start_time: datetime, end_time: datetime,
+                  users: list) -> list:
+    """
+    Load the chat history for the specified channel between the given start and end times.
+
+    Args:
+        channel_id (str): The ID of the channel to retrieve the chat history for.
+        start_time (datetime): The start time of the time range to retrieve chat history for.
+        end_time (datetime): The end time of the time range to retrieve chat history for.
+        users (list): A list of dictionaries containing information about each user in the Slack workspace.
+
+    Returns:
+        list: A list of chat messages from the specified channel, in the format "Speaker: Message".
+
+    Examples:
+        >>> start_time = datetime(2022, 5, 1, 0, 0, 0)
+        >>> end_time = datetime(2022, 5, 2, 0, 0, 0)
+        >>> users = get_users_info()
+        >>> messages = load_messages('C12345678', start_time, end_time, users)
+        >>> print(messages[0])
+        "Alice: Hi, Bob! How's it going?"
+    """
+    messages_info = []
+    try:
+        result = slack_client.conversations_history(
             channel=channel_id,
             oldest=start_time.timestamp(),
-            latest=end_time.timestamp()
-        )
-    except SlackApiError as e:
-        if e.response['error'] == 'not_in_channel':
-            response = client.conversations_join(
-                channel=channel_id
-            )
+            latest=end_time.timestamp(),
+            limit=1000)
+        messages_info.extend(result["messages"])
+    except SlackApiError as error:
+        if error.response['error'] == 'not_in_channel':
+            response = slack_client.conversations_join(channel=channel_id)
             if not response["ok"]:
-                raise SlackApiError("conversations_join() failed")
-            time.sleep(5)  # チャンネルにjoinした後、少し待つ
+                print("Failed conversations_join()")
+                sys.exit(1)
 
-            result = client.conversations_history(
+            time.sleep(5)
+
+            result = slack_client.conversations_history(
                 channel=channel_id,
                 oldest=start_time.timestamp(),
-                latest=end_time.timestamp()
-            )
+                latest=end_time.timestamp(),
+                limit=1000)
         else:
-            print("Error : {}".format(e))
+            print(f"Error : {error}")
             return None
-    # conversations_history api limit is 20 per minute
+
+    # conversations_history API limit is 20 per minute
     time.sleep(3)
 
-    messages = list(filter(lambda m: "subtype" not in m, result["messages"]))
+    while result["has_more"]:
+        result = slack_client.conversations_history(
+            channel=channel_id,
+            oldest=start_time.timestamp(),
+            latest=end_time.timestamp(),
+            limit=1000,
+            cursor=result["response_metadata"]["next_cursor"])
+        messages_info.extend(result["messages"])
+        time.sleep(3)  # this api limit is 20 per minute
+
+    # Filter for human messages only
+    messages = list(filter(lambda m: "subtype" not in m, messages_info))
 
     if len(messages) < 1:
         return None
 
     messages_text = []
-
-    while result["has_more"]:
-        time.sleep(3)  # this api limit is 20 per minute
-        result = client.conversations_history(
-            channel=channel_id,
-            oldest=start_time.timestamp(),
-            latest=end_time.timestamp(),
-            cursor=result["response_metadata"]["next_cursor"]
-        )
-        messages.extend(result["messages"])
     for message in messages[::-1]:
-        if "bot_id" in message:
+        # Ignore bot messages and empty messages
+        if "bot_id" in message or len(message["text"].strip()) == 0:
             continue
-        if message["text"].strip() == '':
-            continue
-        # ユーザーIDからユーザー名に変換する
-        user_id = message['user']
-        sender_name = None
-        for user in users:
-            if user['id'] == user_id:
-                sender_name = user['name']
-                break
-        if sender_name is None:
-            sender_name = user_id
 
-        # テキスト取り出し
-        text = message["text"].replace("\n", "\\n")
+        # Get speaker name
+        speaker_name = get_user_name(message["user"], users) or "somebody"
 
-        # メッセージ中に含まれるユーザーIDやチャンネルIDを名前やチャンネル名に展開する
-        matches = re.findall(r"<@[A-Z0-9]+>", text)
-        for match in matches:
-            user_id = match[2:-1]
-            user_name = None
-            for user in users:
-                if user['id'] == user_id:
-                    user_name = user['name']
-                    break
-            if user_name is None:
-                user_name = user_id
-            text = text.replace(match, f"@{user_name} ")
+        # Get message body fro result dict.
+        body_text = message["text"].replace("\n", "\\n")
 
-        matches = re.findall(r"<#[A-Z0-9]+>", text)
-        for match in matches:
-            channel_id = match[2:-1]
-            channel_name = None
-            for channel in channels:
-                if channel['id'] == channel_id:
-                    channel_name = channel['name']
-                    break
-            if channel_name is None:
-                channel_name = channel_id
-            text = text.replace(match, f"#{channel_name} ")
-        messages_text.append(f"{sender_name}: {text}")
+        # Replace User IDs in a chat message text with user names.
+        body_text = replace_user_id_with_name(body_text, users)
+
+        # all channel id replace to "other channel"
+        body_text = re.sub(r"<#[A-Z0-9]+>", " other channel ", body_text)
+
+        messages_text.append(f"{speaker_name}: {body_text}")
+
     if len(messages_text) == 0:
         return None
     else:
         return messages_text
 
 
-result_text = []
-for channel in channels:
-    messages = load_messages(channel["id"])
-    if messages != None:
-        text = summarize(messages)
-        result_text.append(f"----\n<#{channel['id']}>\n{text}")
+def get_user_name(user_id: str, users: list) -> str:
+    """
+    Get the name of a user with the given ID.
 
-title = (f"{yesterday.strftime('%Y-%m-%d')}のpublic channelの要約")
+    Args:
+        user_id (str): The ID of the user to look up.
+        users (list): A list of user information dictionaries. Each dictionary must have 'id' and 'name' keys.
 
-response = client.chat_postMessage(
-    channel=CHANNEL_ID,
-    text=title+"\n\n"+"\n\n".join(result_text)
-)
-print("Message posted: ", response["ts"])
+    Returns:
+        str: The name of the user with the given ID, or None if no such user exists.
+
+    Examples:
+        >>> users = [{'id': 'U1234', 'name': 'Alice'}, {'id': 'U5678', 'name': 'Bob'}]
+        >>> get_user_name('U1234', users)
+        'Alice'
+        >>> get_user_name('U9999', users)
+        None
+    """
+    matching_users = [user for user in users if user['id'] == user_id]
+    return matching_users[0]['name'] if len(matching_users) > 0 else None
+
+
+def replace_user_id_with_name(body_text: str, users: list) -> str:
+    """
+    Replace user IDs in a chat message text with user names.
+
+    Args:
+        body_text (str): The text of a chat message.
+        users (list): A list of user information dictionaries.
+            Each dictionary must have 'id' and 'name' keys.
+
+    Returns:
+        str: The text of the chat message with user IDs replaced with user names.
+
+    Examples:
+        >>> users = [{'id': 'U1234', 'name': 'Alice'}, {'id': 'U5678', 'name': 'Bob'}]
+        >>> body_text = "Hi <@U1234>, how are you?"
+        >>> replace_user_id_with_name(body_text, users)
+        "Hi @Alice, how are you?"
+    """
+    pattern = r"<@([A-Z0-9]+)>"
+    for match in re.finditer(pattern, body_text):
+        user_id = match.group(1)
+        user_name = next(
+            (user['name'] for user in users if user['id'] == user_id), user_id)
+        body_text = body_text.replace(match.group(0), user_name)
+    return body_text
+
+
+def estimate_openai_chat_token_count(text: str) -> int:
+    """
+    Estimate the number of OpenAI API tokens that would be consumed by sending the given text to the chat API.
+
+    Args:
+        text (str): The text to be sent to the OpenAI chat API.
+
+    Returns:
+        int: The estimated number of tokens that would be consumed by sending the given text to the OpenAI chat API.
+
+    Examples:
+        >>> estimate_openai_chat_token_count("Hello, how are you?")
+        7
+    """
+    # Split the text into words and count the number of characters of each type
+    pattern = re.compile(
+        r"""(
+    \d+       | # digits
+    [a-z]+    | # alphabets
+    \s+       | # whitespace
+    .           # other characters
+    )""", re.VERBOSE | re.IGNORECASE)
+    matches = re.findall(pattern, text)
+
+    # based on https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
+    def counter(tok):
+        if tok == ' ' | tok == '\n':
+            return 0
+        elif tok.isdigit() or tok.isalpha():
+            return (len(tok) + 3) // 4
+        else:
+            return 1
+
+    return sum(map(counter, matches))
+
+
+# Load settings from environment variables
+OPEN_AI_TOKEN = str(os.environ.get('OPEN_AI_TOKEN')).strip()
+SLACK_BOT_TOKEN = str(os.environ.get('SLACK_BOT_TOKEN')).strip()
+CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID')).strip()
+LANGUAGE = str(os.environ.get('LANGUAGE') or "Japanese").strip()
+TIMEZONE_STR = str(os.environ.get('TIMEZONE') or 'Asia/Tokyo').strip()
+TEMPERATURE = float(os.environ.get('TEMPERATURE') or 0.5)
+CHAT_MODEL = str(os.environ.get('CHAT_MODEL') or "gpt-3.5-turbo").strip()
+
+if OPEN_AI_TOKEN == "" or SLACK_BOT_TOKEN == "" or CHANNEL_ID == "":
+    print("OPEN_AI_TOKEN, SLACK_BOT_TOKEN, CHANNEL_ID must be set.")
+    sys.exit(1)
+
+# Set OpenAI API key
+openai.api_key = OPEN_AI_TOKEN
+
+# Slack API Client
+slack_client = WebClient(token=SLACK_BOT_TOKEN)
+
+
+def runner():
+    """
+    app runner
+    """
+    start_time, end_time = get_time_range()
+    channels = get_channels_info()
+    users = get_users_info()
+    time.sleep(3)
+
+    result_text = []
+    for channel in channels:
+        print(channel["name"])
+        messages = load_messages(channel["id"], start_time, end_time, users)
+        if messages is not None:
+            text = summarize("\n".join(map(remove_custom_emoji, messages)),
+                             LANGUAGE)
+            result_text.append(f"----\n<#{channel['id']}>\n{text}")
+
+    title = (f"{start_time.strftime('%Y-%m-%d')} public channels summary\n\n")
+
+    print("\n\n".join(result_text))
+    #response = slack_client.chat_postMessage(channel=CHANNEL_ID,
+    #                                         text=title +
+    #                                         "\n\n".join(result_text))
+    #if not response["ok"]:
+    #    print("Failed to post message: ", response["error"])
+    #    sys.exit(1)
+
+
+if __name__ == '__main__':
+    runner()

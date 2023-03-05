@@ -1,79 +1,95 @@
-# ChatGPT を使って Slack の Public channel をまとめて要約するスクリプト
+# Script for summarizing Slack public channels using ChatGPT
+
+[日本語はこちら](./README.ja.md)
 
 by [masuidrive](https://twitter.com/masuidrive) @ [Bloom&Co., Inc.](https://www.bloom-and-co.com/) 2023-
 [APACHE LICENSE, 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-![](https://raw.githubusercontent.com/masuidrive/slack-summarizer/main/images/slack-summarized.png)
+![](https://raw.githubusercontent.com/masuidrive/slack-summarizer/main/images/slack-summarized.en.png)
 
-Slack の Public channel の要約を作って投稿するスクリプトです。
+This is a script for creating and posting a summary of Slack public channels.
 
-チャンネルが増えた組織では読むのが追いつかないことが多いため、要約を作って投稿することで、チャンネルの活動を把握しやすくすることができます。
+In organizations where the number of channels is increasing, it can be difficult to keep up with reading all the activity. By creating and posting summaries, it is easier to keep track of channel activity.
 
-このコードの大半も ChatGPT を使って書きました。とりあえず動くように書いただけなので、コードは雑然としています。
+Most of this code was written using ChatGPT, and it was written just to get it working, so the code is messy.
 
-誰かキレイにしたら Pull Request ください。機能追加なども大歓迎です。
+If anyone can make it cleaner, please submit a Pull Request. Functionality improvements are also welcome.
 
-簡単な解説などはこちらの記事に書いています。
+A brief explanation can be found in this article here.
 
 https://note.com/masuidrive/n/na0ebf8a4c4f0
 
 ## How to set it up
 
-GitHub Actions で毎日午前 5 時に動くようになっています。これ以外の環境で動かす場合は適当に頑張ってください。
+It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a different environment, you'll have to figure it out.
 
-### 自分の GitHub アカウントに fork する
+### Fork it to your own GitHub account
 
-- 右上の"Fork"ボタンを押して、自分のリポジトリに fork します
-- 有料プランにするなどして GitHub Actions が実行できるようにしておきます
+- Click the "Fork" button in the upper right to fork it to your own repository.
+- Make the GitHub Actions executable by upgrading to a paid plan or some other means.
 
-### 環境変数を設定する
+### Edit running time
 
-- "Settings"タブを開き、左の"Secrets and variables"→"Actions"を開きます
-- 右上の緑の"New Repository Secret"をクリックすると環境変数が設定できるので、次の 3 つの変数を設定します
+- GitHub Actions uses the cron syntax to schedule jobs, which is specified in the `.github/workflows/summarizer.yaml` file with the `minute hour * * *` format.
+- Since this is in UTC, you need to adjust for your own time zone.
+- For example, to run the script every day at 5:00 AM in Japan, you would specify `0 20 * * *` to run it at 8:00 PM UTC the day before.
+
+### Set environment variables
+
+- Open the "Settings" tab and click "Secrets and variables"->"Actions".
+- Click the green "New Repository Secret" button to set environment variables for the following three variables.
 
 ![](https://raw.githubusercontent.com/masuidrive/slack-summarizer/main/images/github-settings.png)
 
 #### OPEN_AI_TOKEN
 
-- OpenAI の認証トークン
-- [OpenAI の Web サイト](https://openai.com/)にアクセスしてください
-- 右上の"Sign In"ボタンをクリックし、アカウントにログインしてください
-- ページ上部の"API"メニューから、"API Key"をクリックして、API キーを生成します
-- "API Key"ページにアクセスすると、API キーが表示されます。これをコピーして Value に貼り付けます
+- OpenAI's authentication token
+- Access [OpenAI's website](https://openai.com/).
+- Click the "Sign In" button on the upper right and log in to your account.
+- Click "API Key" from the "API" menu at the top of the page to generate an API key.
+- When you access the "API Key" page, the API key will be displayed. Copy it and paste it into Value.
 
 #### SLACK_BOT_TOKEN
 
-- Slack の API 認証トークン
-- [Slack API の Web サイト](https://api.slack.com/)にアクセスし、ログインしてください
-- "Create a new app"をクリックして、"From an app manifest"を選択し manifest に下記の内容をコピーします
+- Slack's API authentication token
+- Access the [Slack API website](https://api.slack.com/) and log in.
+- Click "Create a new app" and select "From an app manifest", and copy the following contents to the manifest.
 
 ```
 {"display_information":{"name":"Summary","description":"Public channelのサマリーを作る","background_color":"#d45f00"},"features":{"bot_user":{"display_name":"Summary","always_online":false}},"oauth_config":{"scopes":{"bot":["channels:history","channels:join","channels:read","chat:write","users:read"]}},"settings":{"org_deploy_enabled":true,"socket_mode_enabled":false,"token_rotation_enabled":false}}
 ```
 
-- 画面左の"Install App"をクリックし、右に出る"Install App to Workspace"をクリックして、アプリをワークスペースにインストールします。インストールが完了すると、bot の OAuth アクセストークンが表示されます
-- この`xoxb-`で始まるトークンをコピーして Value に貼り付けます
+- Click "Install App" on the left side of the screen, then click "Install App to Workspace" that appears on the right side to install the app in your workspace. Once the installation is complete, the bot's OAuth access token will be displayed.
+- Copy this token that begins with `xoxb-` and paste it into Value.
 
 #### SLACK_POST_CHANNEL_ID
 
-- 要約結果を投稿する Slack の channel_id
-- Slack で要約結果を投稿したいチャンネルを開きます
-- 上部のチャンネル名をクリックし、出てきた Popup の最下部にある Channel ID を Value に貼り付けます
+- The channel_id in Slack where you want to post the summary result
+- Open the Slack channel where you want to post the summary results.
+- Click the channel name at the top and paste the Channel ID, which appears at the bottom of the popup window.
 
-### Channel に bot をインストール
+#### LANGUAGE
 
-- 画面上部の検索窓から"Summarizer"を検索し、"Summarizer [APP]"をクリックします。
-- 上の"Summarizer"をクリックし、"Add this app to a channel"をクリックして、要約結果を投稿したいチャンネルを指定します
+-
 
-### 実行
+#### TIMEZONE
 
-- GitHub のリポジトリで"Settings"タブを開き、左の"Actions"→"General"を開きます
-- "Actions permissions"の"Allow all actions and reusable workflows"を選択して保存してください
+-
 
-これらの設定をすると、毎日午前 5 時に Slack の Public channel の要約結果が投稿されます。
+### Install the bot in the channel
 
-手動で実行してみる場合には"Actions" タブを開き、左の"Summarizer"をクリックして、右の"Run workflow"をおしてください。
+- Search for "Summary" in the search window at the top of the screen and click "Summary [APP]".
+- Click "Summarizer" and click "Add this app to a channel" to specify the channel where you want to post the summary results.
+
+### Run
+
+- Open the "Settings" tab in the GitHub repository, then click "Actions"->"General" on the left side.
+- Select "Allow all actions and reusable workflows" in "Actions permissions" and save it.
+
+With these settings, a summary of Slack's public channels will be posted every day at 5:00 a.m.
+
+you would manually execute it by opening the "Actions" tab, clicking on "Summarizer" on the left, and clicking "Run workflow" on the right.
 
 ## Problems
 
-このスクリプトで既知の課題としては、1 チャンネル当たりの発言が 4000token を超えるとコケます。分割する部分は書いてないので。Pull Request をお待ちしてます → 誰か
+One known issue with this script is that it crashes if there are more than 4000 tokens per post in a channel. The script does not currently split these posts, so we are waiting for a Pull Request to address this issue.
