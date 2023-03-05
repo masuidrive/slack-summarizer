@@ -58,6 +58,7 @@ try:
     channels_info = client.conversations_list(
         types="public_channel",
         exclude_archived=True,
+        limit=1000
     )
     channels = [channel for channel in channels_info['channels']
                 if not channel["is_archived"] and channel["is_channel"]]
