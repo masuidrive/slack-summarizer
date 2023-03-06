@@ -77,7 +77,7 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 
 ### Channel に bot をインストール
 
-- 画面上部の検索窓から"Summarizer"を検索し、"Summary [APP]"をクリックします。
+- 画面上部の検索窓から"Summary"を検索し、"Summary [APP]"をクリックします。
 - 上の"Summary"をクリックし、"Add this app to a channel"をクリックして、要約結果を投稿したいチャンネルを指定します
 
 ### 実行
@@ -87,4 +87,4 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 
 これらの設定をすると、毎日午前 5 時に Slack の Public channel の要約結果が投稿されます。
 
-手動で実行してみる場合には"Actions" タブを開き、左の"Summarizer"をクリックして、右の"Run workflow"をおしてください。
+手動で実行してみる場合には"Actions" タブを開き、左の"Summary"をクリックして、右の"Run workflow"をおしてください。
