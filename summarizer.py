@@ -54,7 +54,8 @@ def summarize(text: str, language: str = "Japanese"):
             ])
         }])
 
-    print(response["choices"][0]["message"]['content'])
+    if DEBUG:
+        print(response["choices"][0]["message"]['content'])
     return response["choices"][0]["message"]['content']
 
 
@@ -70,7 +71,7 @@ def get_time_range():
         >>> print(start_time, end_time)
         2022-05-17 09:00:00+09:00 2022-05-18 10:00:00+09:00
     """
-    hours_back = 25 * 3
+    hours_back = 25
     timezone = pytz.timezone(TIMEZONE_STR)
     now = datetime.now(timezone)
     yesterday = now - timedelta(hours=hours_back)
@@ -151,11 +152,10 @@ def get_channels_info() -> list:
         ]
 
         def sort_by_channel_name(lst):
-            # 先頭に数字があるか判定
+
             def is_digit_first(s):
                 return s and s[0].isdigit()
 
-            # 先頭が数字であれば数値として返し、数字でなければ s を Unicode コードポイントとして返す
             def key(obj):
                 s = obj["name"]
                 if is_digit_first(s):
@@ -440,7 +440,8 @@ def runner():
 
     result_text = []
     for channel in channels:
-        print(channel["name"])
+        if DEBUG:
+            print(channel["name"])
         messages = load_messages(channel["id"], start_time, end_time, users)
         if messages is None:
             continue
@@ -450,7 +451,6 @@ def runner():
 
         result_text.append(f"----\n<#{channel['id']}>\n")
         for spilitted_messages in split_messages_by_token_count(messages):
-            print("\n".join(spilitted_messages))
             text = summarize("\n".join(spilitted_messages), LANGUAGE)
             result_text.append(text)
 
