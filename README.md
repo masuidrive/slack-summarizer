@@ -82,7 +82,7 @@ It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a 
 ### Install the bot in the channel
 
 - Search for "Summary" in the search window at the top of the screen and click "Summary [APP]".
-- Click "Summarizer" and click "Add this app to a channel" to specify the channel where you want to post the summary results.
+- Click "Summary" and click "Add this app to a channel" to specify the channel where you want to post the summary results.
 
 ### Run
 
@@ -91,4 +91,4 @@ It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a 
 
 With these settings, a summary of Slack's public channels will be posted every day at 5:00 a.m.
 
-you would manually execute it by opening the "Actions" tab, clicking on "Summarizer" on the left, and clicking "Run workflow" on the right.
+you would manually execute it by opening the "Actions" tab, clicking on "Summary" on the left, and clicking "Run workflow" on the right.
