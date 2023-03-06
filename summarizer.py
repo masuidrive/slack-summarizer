@@ -8,6 +8,7 @@ import time
 from datetime import datetime, timedelta
 import pytz
 import openai
+import emoji
 from slack_sdk.errors import SlackApiError
 from slack_sdk import WebClient
 
@@ -38,16 +39,18 @@ def summarize(text: str, language: str = "Japanese"):
                 'The chat log format consists of one line per message in the format "Speaker: Message".',
                 "The `\\n` within the message represents a line break."
                 f'The user understands {language} only.',
-                f'So, The assistant need to speak {language}.',
+                f'So, The assistant need to speak in {language}.',
             ])
         }, {
             "role":
             "user",
             "content":
             "\n".join([
-                f"Please summarize the following chat log with short bullet points in {language}.",
-                "Not a line by line description.", "Short as a whole.", "\n",
-                text
+                f"Please meaning summarize the following chat log to flat bullet list in {language}.",
+                "It isn't line by line summary.",
+                "Do not include greeting/salutation/polite expressions in summary.",
+                "With make it easier to read."
+                f"Write in {language}.", "", text
             ])
         }])
 
@@ -172,9 +175,9 @@ def get_channels_info() -> list:
         sys.exit(1)
 
 
-def remove_custom_emoji(text: str) -> str:
+def remove_emoji(text: str) -> str:
     """
-    Remove custom emojis from the given text.
+    Remove emojis from the given text.
 
     Args:
         text (str): A string containing the text to remove custom emojis from.
@@ -187,8 +190,13 @@ def remove_custom_emoji(text: str) -> str:
         >>> remove_custom_emoji(text)
         'Hello, world!  '
     """
-    pattern = r":\w+?:"
-    return re.sub(pattern, "", text)
+    # Remove Unicode emojis
+    text = emoji.replace_emoji(text, replace='')
+
+    # Remove Slack custom emojis
+    custom_pattern = r":[-_a-zA-Z0-9]+?:"
+    text = re.sub(custom_pattern, "", text)
+    return text
 
 
 def load_messages(channel_id: str, start_time: datetime, end_time: datetime,
@@ -359,7 +367,7 @@ def estimate_openai_chat_token_count(text: str) -> int:
 
     # based on https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them
     def counter(tok):
-        if tok == ' ' | tok == '\n':
+        if tok == ' ' or tok == '\n':
             return 0
         elif tok.isdigit() or tok.isalpha():
             return (len(tok) + 3) // 4
@@ -369,14 +377,46 @@ def estimate_openai_chat_token_count(text: str) -> int:
     return sum(map(counter, matches))
 
 
+def split_messages_by_token_count(messages: list[str]) -> list[list[str]]:
+    """
+    Split a list of strings into sublists with a maximum token count.
+
+    Args:
+        messages (list[str]): A list of strings to be split.
+
+    Returns:
+        list[list[str]]: A list of sublists, where each sublist has a token count less than or equal to max_body_tokens.
+    """
+    body_token_counts = [
+        estimate_openai_chat_token_count(message) for message in messages
+    ]
+    result = []
+    current_sublist = []
+    current_count = 0
+
+    for message, count in zip(messages, body_token_counts):
+        if current_count + count <= MAX_BODY_TOKENS:
+            current_sublist.append(message)
+            current_count += count
+        else:
+            result.append(current_sublist)
+            current_sublist = [message]
+            current_count = count
+
+    result.append(current_sublist)
+    return result
+
+
 # Load settings from environment variables
 OPEN_AI_TOKEN = str(os.environ.get('OPEN_AI_TOKEN')).strip()
 SLACK_BOT_TOKEN = str(os.environ.get('SLACK_BOT_TOKEN')).strip()
 CHANNEL_ID = str(os.environ.get('SLACK_POST_CHANNEL_ID')).strip()
 LANGUAGE = str(os.environ.get('LANGUAGE') or "Japanese").strip()
 TIMEZONE_STR = str(os.environ.get('TIMEZONE') or 'Asia/Tokyo').strip()
-TEMPERATURE = float(os.environ.get('TEMPERATURE') or 0.5)
+TEMPERATURE = float(os.environ.get('TEMPERATURE') or 0.3)
 CHAT_MODEL = str(os.environ.get('CHAT_MODEL') or "gpt-3.5-turbo").strip()
+DEBUG = str(os.environ.get('DEBUG') or "").strip() != ""
+MAX_BODY_TOKENS = 3000
 
 if OPEN_AI_TOKEN == "" or SLACK_BOT_TOKEN == "" or CHANNEL_ID == "":
     print("OPEN_AI_TOKEN, SLACK_BOT_TOKEN, CHANNEL_ID must be set.")
@@ -402,20 +442,29 @@ def runner():
     for channel in channels:
         print(channel["name"])
         messages = load_messages(channel["id"], start_time, end_time, users)
-        if messages is not None:
-            text = summarize("\n".join(map(remove_custom_emoji, messages)),
-                             LANGUAGE)
-            result_text.append(f"----\n<#{channel['id']}>\n{text}")
+        if messages is None:
+            continue
+
+        # remove emojis in messages
+        messages = list(map(remove_emoji, messages))
+
+        result_text.append(f"----\n<#{channel['id']}>\n")
+        for spilitted_messages in split_messages_by_token_count(messages):
+            print("\n".join(spilitted_messages))
+            text = summarize("\n".join(spilitted_messages), LANGUAGE)
+            result_text.append(text)
 
     title = (f"{start_time.strftime('%Y-%m-%d')} public channels summary\n\n")
 
-    print("\n\n".join(result_text))
-    #response = slack_client.chat_postMessage(channel=CHANNEL_ID,
-    #                                         text=title +
-    #                                         "\n\n".join(result_text))
-    #if not response["ok"]:
-    #    print("Failed to post message: ", response["error"])
-    #    sys.exit(1)
+    if DEBUG:
+        print("\n".join(result_text))
+    else:
+        response = slack_client.chat_postMessage(channel=CHANNEL_ID,
+                                                 text=title +
+                                                 "\n".join(result_text))
+        if not response["ok"]:
+            print("Failed to post message: ", response["error"])
+            sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -11,13 +11,11 @@ This is a script for creating and posting a summary of Slack public channels.
 
 In organizations where the number of channels is increasing, it can be difficult to keep up with reading all the activity. By creating and posting summaries, it is easier to keep track of channel activity.
 
-Most of this code was written using ChatGPT, and it was written just to get it working, so the code is messy.
+Most of this code was written using ChatGPT. If you have any better prompts or feature enhancements, please submit a Pull Request.
 
 If anyone can make it cleaner, please submit a Pull Request. Functionality improvements are also welcome.
 
-A brief explanation can be found in this article here.
-
-https://note.com/masuidrive/n/na0ebf8a4c4f0
+If you have any questions, please feel free to contact me on http://twitter.com/masuidrive_en or http://twitter.com/masuidrive.
 
 ## How to set it up
 
@@ -44,7 +42,7 @@ It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a 
 #### OPEN_AI_TOKEN
 
 - OpenAI's authentication token
-- Access [OpenAI's website](https://openai.com/).
+- Access [OpenAI's website](https://platform.openai.com/).
 - Click the "Sign In" button on the upper right and log in to your account.
 - Click "API Key" from the "API" menu at the top of the page to generate an API key.
 - When you access the "API Key" page, the API key will be displayed. Copy it and paste it into Value.
@@ -70,11 +68,14 @@ It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a 
 
 #### LANGUAGE
 
--
+- Specifies the language used for summarization.
+- Any value can be specified, such as "ja" or "Japanese" for Japanese, or "en" or "English" for English.
 
 #### TIMEZONE
 
--
+- Specifies the timezone for the primarily read region.
+- Specify in the "TZ database name" format, such as "Asia/Tokyo" or "America/New_York".
+- See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 ### Install the bot in the channel
 
@@ -89,7 +90,3 @@ It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a 
 With these settings, a summary of Slack's public channels will be posted every day at 5:00 a.m.
 
 you would manually execute it by opening the "Actions" tab, clicking on "Summarizer" on the left, and clicking "Run workflow" on the right.
-
-## Problems
-
-One known issue with this script is that it crashes if there are more than 4000 tokens per post in a channel. The script does not currently split these posts, so we are waiting for a Pull Request to address this issue.

@@ -11,9 +11,7 @@ Slack の Public channel の要約を作って投稿するスクリプトです�
 
 チャンネルが増えた組織では読むのが追いつかないことが多いため、要約を作って投稿することで、チャンネルの活動を把握しやすくすることができます。
 
-このコードの大半も ChatGPT を使って書きました。とりあえず動くように書いただけなので、コードは雑然としています。
-
-誰かキレイにしたら Pull Request ください。機能追加なども大歓迎です。
+このコードの大半も ChatGPT を使って書きました。もっといいプロンプトや機能拡張があったら、Pull Request を送ってください
 
 簡単な解説などはこちらの記事に書いています。
 
@@ -38,7 +36,7 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 #### OPEN_AI_TOKEN
 
 - OpenAI の認証トークン
-- [OpenAI の Web サイト](https://openai.com/)にアクセスしてください
+- [OpenAI の Web サイト](https://platform.openai.com/)にアクセスしてください
 - 右上の"Sign In"ボタンをクリックし、アカウントにログインしてください
 - ページ上部の"API"メニューから、"API Key"をクリックして、API キーを生成します
 - "API Key"ページにアクセスすると、API キーが表示されます。これをコピーして Value に貼り付けます
@@ -69,8 +67,9 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 
 #### TIMEZONE
 
-- 主に読まれるタイムゾーンを指定します。
-- "Asia/Tokyo", "America/New_York"などなんでも指定できます
+- 主に読まれる地域のタイムゾーンを指定します。
+- "Asia/Tokyo", "America/New_York"など"TZ database name"形式で指定します
+- https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 ### Channel に bot をインストール
 
@@ -85,7 +84,3 @@ GitHub Actions で毎日午前 5 時に動くようになっています。こ�
 これらの設定をすると、毎日午前 5 時に Slack の Public channel の要約結果が投稿されます。
 
 手動で実行してみる場合には"Actions" タブを開き、左の"Summarizer"をクリックして、右の"Run workflow"をおしてください。
-
-## Problems
-
-このスクリプトで既知の課題としては、1 チャンネル当たりの発言が 4000token を超えるとコケます。分割する部分は書いてないので。Pull Request をお待ちしてます → 誰か
