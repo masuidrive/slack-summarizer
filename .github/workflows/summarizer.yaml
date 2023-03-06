@@ -6,8 +6,6 @@ on:
     - cron: "0 20 * * *"
     # To run the script every day at 5:00 a.m. in Japan time, you would need to schedule the job to run at 8:00 p.m. UTC the previous day (because Japan is 9 hours ahead of UTC). This can be done in the workflow file by setting the `cron` parameter in the `schedule` event.
 
-This will run the `summarizer` job at 8:00 p.m. UTC daily, which is equivalent to 5:00 a.m. in Japan.
-
 jobs:
   summarize:
     runs-on: ubuntu-latest
