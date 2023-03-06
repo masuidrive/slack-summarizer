@@ -199,7 +199,7 @@ def runner():
     if DEBUG:
         print("\n".join(result_text))
     else:
-        retry(slack_client.postSummary(title + "\n".join(result_text)),
+        retry(lambda: slack_client.postSummary(title + "\n".join(result_text)),
               exception=SlackApiError)
 
 
