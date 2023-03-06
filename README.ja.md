@@ -5,9 +5,9 @@
 by [masuidrive](https://twitter.com/masuidrive) @ [Bloom&Co., Inc.](https://www.bloom-and-co.com/) 2023-
 [APACHE LICENSE, 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-![](https://raw.githubusercontent.com/masuidrive/slack-summarizer/main/images/slack-summarized.ja.png)
+![](./images/slack-summarized.ja.png)
 
-Slack の Public channel の要約を作って投稿するスクリプトです。
+OpenAI の ChatGPT API を使って、Slack の Public channel の要約を作って投稿するスクリプトです。
 
 チャンネルが増えた組織では読むのが追いつかないことが多いため、要約を作って投稿することで、チャンネルの活動を把握しやすくすることができます。
 
@@ -16,6 +16,10 @@ Slack の Public channel の要約を作って投稿するスクリプトです�
 簡単な解説などはこちらの記事に書いています。
 
 https://note.com/masuidrive/n/na0ebf8a4c4f0
+
+OpenAI の情報取扱に関する規約は下記などを自分で確認してください
+
+https://platform.openai.com/docs/data-usage-policies
 
 ## GitHub Actions で動かす
 
