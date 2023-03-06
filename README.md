@@ -17,7 +17,7 @@ If anyone can make it cleaner, please submit a Pull Request. Functionality impro
 
 If you have any questions, please feel free to contact me on http://twitter.com/masuidrive_en or http://twitter.com/masuidrive.
 
-## How to set it up
+## How to set it up on GitHub Actions
 
 It runs on GitHub Actions every day at 5:00 a.m., so if you want to run it in a different environment, you'll have to figure it out.
 

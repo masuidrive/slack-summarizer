@@ -17,7 +17,7 @@ Slack の Public channel の要約を作って投稿するスクリプトです�
 
 https://note.com/masuidrive/n/na0ebf8a4c4f0
 
-## How to set it up
+## GitHub Actions で動かす
 
 GitHub Actions で毎日午前 5 時に動くようになっています。これ以外の環境で動かす場合は適当に頑張ってください。
 
