@@ -144,7 +144,7 @@ class SlackClient:
             None
         """
         matching_users = [user for user in self.users if user['id'] == user_id]
-        return matching_users[0]['name'] if len(matching_users) > 0 else None
+        return matching_users[0]['profile']['display_name'] if len(matching_users) > 0 else None
 
     def replace_user_id_with_name(self, body_text: str) -> str:
         """ Replace user IDs in a chat message text with user names.
