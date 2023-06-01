@@ -42,7 +42,6 @@ class SlackClient:
             channel_id (str): The ID of the channel to retrieve the chat history for.
             start_time (datetime): The start time of the time range to retrieve chat history for.
             end_time (datetime): The end time of the time range to retrieve chat history for.
-            users (list): A list of dictionaries containing information about each user in the Slack workspace.
 
         Returns:
             list: A list of chat messages from the specified channel, in the format "Speaker: Message".
