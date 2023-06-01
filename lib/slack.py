@@ -111,7 +111,7 @@ class SlackClient:
             # Get speaker name
             speaker_name = self.get_user_name(message["user"]) or "somebody"
 
-            # Get message body fro result dict.
+            # Get message body from result dict.
             body_text = message["text"].replace("\n", "\\n")
 
             # Replace User IDs in a chat message text with user names.
