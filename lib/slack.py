@@ -11,11 +11,12 @@ class SlackClient:
     """ A class for managing a Slack bot client.
 
     Args:
-        token (str): The Slack Bot token used to authenticate with the Slack API.
+        slack_api_token (str): The Slack Bot token used to authenticate with the Slack API.
+        summary_channel (str): The Slack channel ID where the summary is posted.
 
     Example:
         ```
-        client = SlackClient(SLACK_BOT_TOKEN)
+        client = SlackClient(SLACK_BOT_TOKEN, SUMMARY_CHANNEL_ID)
         client.postSummary(text)
         ```
     """
@@ -59,8 +60,8 @@ class SlackClient:
             self._wait_api_call()
             result = retry(lambda: self.client.conversations_history(
                 channel=channel_id,
-                oldest=start_time.timestamp(),
-                latest=end_time.timestamp(),
+                oldest=str(start_time.timestamp()),
+                latest=str(end_time.timestamp()),
                 limit=1000),
                            exception=SlackApiError)
             messages_info.extend(result["messages"])
@@ -77,8 +78,8 @@ class SlackClient:
 
                 result = retry(lambda: self.client.conversations_history(
                     channel=channel_id,
-                    oldest=start_time.timestamp(),
-                    latest=end_time.timestamp(),
+                    oldest=str(start_time.timestamp()),
+                    latest=str(end_time.timestamp()),
                     limit=1000),
                                exception=SlackApiError)
             else:
@@ -89,8 +90,8 @@ class SlackClient:
             self._wait_api_call()
             result = retry(lambda: self.client.conversations_history(
                 channel=channel_id,
-                oldest=start_time.timestamp(),
-                latest=end_time.timestamp(),
+                oldest=str(start_time.timestamp()),
+                latest=str(end_time.timestamp()),
                 limit=1000,
                 cursor=result["response_metadata"]["next_cursor"]),
                            exception=SlackApiError)
