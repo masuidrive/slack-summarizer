@@ -12,6 +12,7 @@ def retry(func, max_retries=5, sleep_time=10, exception=Exception):
         func (callable): The function to be wrapped.
         max_retries (int, optional): The maximum number of retries. Defaults to 5.
         sleep_time (int, optional): The sleep time in seconds between retries. Defaults to 10.
+        exception (Exception, optional): The expected exception class to catch and retry if raised. Defaults to Exception.
 
     Returns:
         result of func call.

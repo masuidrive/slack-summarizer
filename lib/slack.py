@@ -11,11 +11,12 @@ class SlackClient:
     """ A class for managing a Slack bot client.
 
     Args:
-        token (str): The Slack Bot token used to authenticate with the Slack API.
+        slack_api_token (str): The Slack Bot token used to authenticate with the Slack API.
+        summary_channel (str): The Slack channel ID where the summary is posted.
 
     Example:
         ```
-        client = SlackClient(SLACK_BOT_TOKEN)
+        client = SlackClient(SLACK_BOT_TOKEN, SUMMARY_CHANNEL_ID)
         client.postSummary(text)
         ```
     """
@@ -41,7 +42,6 @@ class SlackClient:
             channel_id (str): The ID of the channel to retrieve the chat history for.
             start_time (datetime): The start time of the time range to retrieve chat history for.
             end_time (datetime): The end time of the time range to retrieve chat history for.
-            users (list): A list of dictionaries containing information about each user in the Slack workspace.
 
         Returns:
             list: A list of chat messages from the specified channel, in the format "Speaker: Message".
@@ -59,8 +59,8 @@ class SlackClient:
             self._wait_api_call()
             result = retry(lambda: self.client.conversations_history(
                 channel=channel_id,
-                oldest=start_time.timestamp(),
-                latest=end_time.timestamp(),
+                oldest=str(start_time.timestamp()),
+                latest=str(end_time.timestamp()),
                 limit=1000),
                            exception=SlackApiError)
             messages_info.extend(result["messages"])
@@ -77,8 +77,8 @@ class SlackClient:
 
                 result = retry(lambda: self.client.conversations_history(
                     channel=channel_id,
-                    oldest=start_time.timestamp(),
-                    latest=end_time.timestamp(),
+                    oldest=str(start_time.timestamp()),
+                    latest=str(end_time.timestamp()),
                     limit=1000),
                                exception=SlackApiError)
             else:
@@ -89,8 +89,8 @@ class SlackClient:
             self._wait_api_call()
             result = retry(lambda: self.client.conversations_history(
                 channel=channel_id,
-                oldest=start_time.timestamp(),
-                latest=end_time.timestamp(),
+                oldest=str(start_time.timestamp()),
+                latest=str(end_time.timestamp()),
                 limit=1000,
                 cursor=result["response_metadata"]["next_cursor"]),
                            exception=SlackApiError)
@@ -111,7 +111,7 @@ class SlackClient:
             # Get speaker name
             speaker_name = self.get_user_name(message["user"]) or "somebody"
 
-            # Get message body fro result dict.
+            # Get message body from result dict.
             body_text = message["text"].replace("\n", "\\n")
 
             # Replace User IDs in a chat message text with user names.

@@ -190,8 +190,8 @@ def runner():
         messages = list(map(remove_emoji, messages))
 
         result_text.append(f"----\n<#{channel['id']}>\n")
-        for spilitted_messages in split_messages_by_token_count(messages):
-            text = summarize("\n".join(spilitted_messages), LANGUAGE)
+        for splitted_messages in split_messages_by_token_count(messages):
+            text = summarize("\n".join(splitted_messages), LANGUAGE)
             result_text.append(text)
 
     title = (f"{start_time.strftime('%Y-%m-%d')} public channels summary\n\n")
